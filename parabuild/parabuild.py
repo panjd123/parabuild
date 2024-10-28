@@ -21,8 +21,12 @@ class Parabuild:
     def __init__(self,
                  project_path,
                  task,
-                 init_commands = [["cmake", "-B", "build", "."]],
+                 init_commands = [
+                    ["rm", "-rf", "build"],
+                    ["cmake", "-B", "build", "."]
+                ],
                  post_task_maker=_default_post_task_maker,
+                 excludes=[],
                  workspace_dir=None,
                  num_workers=None,
                  enable_tqdm=True,
@@ -37,6 +41,7 @@ class Parabuild:
         self.workspace_dir = workspace_dir if workspace_dir else "parabuild_workspace"
         self.enable_tqdm = enable_tqdm
         self.post_task_maker = post_task_maker
+        self.excludes = excludes
         if clean_workspace and os.path.exists(self.workspace_dir):
             subprocess.run(["rm", "-rf", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
         if not os.path.exists(self.workspace_dir):
@@ -51,8 +56,12 @@ class Parabuild:
         for i in range(self.num_workers):
             workespace_path = f"{self.workspace_dir}/worker_{i}"
             def init_work():
-                subprocess.run(["cp", "-r", self.project_path, workespace_path],
-                               stdout=subprocess.DEVNULL, check=True)
+                # subprocess.run(["cp", "-r", self.project_path, workespace_path],
+                #                stdout=subprocess.DEVNULL, check=True)
+                exclude_str = " ".join([f"--exclude={exclude}" for exclude in self.excludes])
+                # mkdir -p "parabuild_workspace/worker_0" && tar -cpP --exclude=.git --exclude=build -C "parabuild/test/example_project" . | tar -xpP -C "parabuild_workspace/worker_0"
+                subprocess.run(f'mkdir -p "{workespace_path}"', shell=True, stdout=subprocess.DEVNULL, check=True)
+                os.system(f'tar -cpP {exclude_str} -C "{self.project_path}" . | tar -xpP -C "{workespace_path}"')
                 for command in self.init_commands:
                     subprocess.run(command, cwd=workespace_path, stdout=subprocess.DEVNULL, check=True)
             init_worker = Process(target=init_work)

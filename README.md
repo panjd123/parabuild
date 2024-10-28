@@ -151,6 +151,11 @@ Separate compilation and execution, with the goal of alternating compilation and
 
 ## Update
 
+### 0.1.1
+
+- Add exclude cp support
+- Upgrade to pyproject.toml
+
 ### 0.1.0
 
 - First version
