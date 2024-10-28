@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parabuild"
+version = "0.1.0"
+description = "Multi-process building to run multiple versions of a project."
+readme = "README.md"
+authors = [
+    {name = "Jarden Pan", email = "xm.jarden@gmail.com"},
+]
+maintainers = [
+    {name = "Jarden Pan", email = "xm.jarden@gmail.com"},
+]
+license = {file = "LICENSE"}
+dependencies = ["tqdm"]
+
+[project.urls]
+homepage = "https://github.com/panjd123/parabuild"
+source = "https://github.com/panjd123/parabuild"
+
+[tool.setuptools.packages.find]
+where = ["parabuild"]
