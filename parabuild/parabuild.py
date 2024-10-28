@@ -3,6 +3,13 @@ import subprocess
 import os
 import time
 
+def _check_installed(executable):
+    try:
+        subprocess.run([executable, "--version"], stdout=subprocess.DEVNULL, check=True)
+    except FileNotFoundError:
+        return False
+    return True
+
 class ParabuildSubprocessError(Exception):
     def __init__(self, message):
         self.message = message
@@ -43,12 +50,15 @@ class Parabuild:
         self.post_task_maker = post_task_maker
         self.excludes = excludes
         if clean_workspace and os.path.exists(self.workspace_dir):
-            # subprocess.run(["rm", "-rf", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
-            subprocess.run(["rm", "-rf" ,"empty_dir"], stdout=subprocess.DEVNULL, check=True)
-            subprocess.run(["mkdir", "empty_dir"], stdout=subprocess.DEVNULL, check=True)
-            subprocess.run(["rsync", "-a", "--delete", "empty_dir/", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
-            subprocess.run(["rm", "-rf", "empty_dir"], stdout=subprocess.DEVNULL, check=True)
-            subprocess.run(["rm", "-rf", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
+            if not _check_installed("rsync"):
+                print(f"Warning: rsync not installed, deleting {self.workspace_dir} without rsync, this may take a while")
+                subprocess.run(["rm", "-rf", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
+            else:
+                subprocess.run(["rm", "-rf" ,"empty_dir"], stdout=subprocess.DEVNULL, check=True)
+                subprocess.run(["mkdir", "empty_dir"], stdout=subprocess.DEVNULL, check=True)
+                subprocess.run(["rsync", "-a", "--delete", "empty_dir/", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
+                subprocess.run(["rm", "-rf", "empty_dir"], stdout=subprocess.DEVNULL, check=True)
+                subprocess.run(["rm", "-rf", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
         if not os.path.exists(self.workspace_dir):
             os.makedirs(self.workspace_dir, exist_ok=True)
 
@@ -61,12 +71,15 @@ class Parabuild:
         for i in range(self.num_workers):
             workespace_path = f"{self.workspace_dir}/worker_{i}"
             def init_work():
-                # subprocess.run(["cp", "-r", self.project_path, workespace_path],
-                #                stdout=subprocess.DEVNULL, check=True)
-                exclude_str = " ".join([f"--exclude={exclude}" for exclude in self.excludes])
-                # mkdir -p "parabuild_workspace/worker_0" && tar -cpP --exclude=.git --exclude=build -C "parabuild/test/example_project" . | tar -xpP -C "parabuild_workspace/worker_0"
-                subprocess.run(f'mkdir -p "{workespace_path}"', shell=True, stdout=subprocess.DEVNULL, check=True)
-                os.system(f'tar -cpP {exclude_str} -C "{self.project_path}" . | tar -xpP -C "{workespace_path}"')
+                if not _check_installed("tar"):
+                    print(f"Warning: tar not installed, exclude options will not work")
+                    subprocess.run(["cp", "-r", self.project_path, workespace_path],
+                                stdout=subprocess.DEVNULL, check=True)
+                else:
+                    # mkdir -p "parabuild_workspace/worker_0" && tar -cpP --exclude=.git --exclude=build -C "parabuild/test/example_project" . | tar -xpP -C "parabuild_workspace/worker_0"
+                    exclude_str = " ".join([f"--exclude={exclude}" for exclude in self.excludes])
+                    subprocess.run(f'mkdir -p "{workespace_path}"', shell=True, stdout=subprocess.DEVNULL, check=True)
+                    os.system(f'tar -cpP {exclude_str} -C "{self.project_path}" . | tar -xpP -C "{workespace_path}"')
                 for command in self.init_commands:
                     subprocess.run(command, cwd=workespace_path, stdout=subprocess.DEVNULL, check=True)
             init_worker = Process(target=init_work)
