@@ -43,6 +43,11 @@ class Parabuild:
         self.post_task_maker = post_task_maker
         self.excludes = excludes
         if clean_workspace and os.path.exists(self.workspace_dir):
+            # subprocess.run(["rm", "-rf", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
+            subprocess.run(["rm", "-rf" ,"empty_dir"], stdout=subprocess.DEVNULL, check=True)
+            subprocess.run(["mkdir", "empty_dir"], stdout=subprocess.DEVNULL, check=True)
+            subprocess.run(["rsync", "-a", "--delete", "empty_dir/", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
+            subprocess.run(["rm", "-rf", "empty_dir"], stdout=subprocess.DEVNULL, check=True)
             subprocess.run(["rm", "-rf", self.workspace_dir], stdout=subprocess.DEVNULL, check=True)
         if not os.path.exists(self.workspace_dir):
             os.makedirs(self.workspace_dir, exist_ok=True)
