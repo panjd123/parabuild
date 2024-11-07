@@ -7,7 +7,7 @@ Specifically, this package was initially designed to test the performance of a c
 ## How to use
 
 ```bash
-pip install -e parabuild
+pip install -e .
 python examples/example.py
 ```
 
@@ -150,6 +150,10 @@ for i in range(10000, 10100):
 Separate compilation and execution, with the goal of alternating compilation and execution in a schedulable manner to ensure system environment stability during execution (such as CPU resources)
 
 ## Update
+
+### 0.1.2
+
+- Fix `README.md` error
 
 ### 0.1.1
 
